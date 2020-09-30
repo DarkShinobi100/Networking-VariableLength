@@ -120,7 +120,7 @@ void talk_to_client(SOCKET clientSocket)
 	while (true)
 	{
 		// Receive as much data from the client as will fit in the buffer.
-		int count = recv(clientSocket, buffer, MESSAGESIZE, 0);
+		int count = recv(clientSocket, buffer, MESSAGESIZE, MSG_WAITALL);
 		if (count <= 0)
 		{
 			printf("Client closed connection\n");
