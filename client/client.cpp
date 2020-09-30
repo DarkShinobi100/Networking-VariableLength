@@ -24,7 +24,7 @@
 #define SERVERPORT 5555
 
 // The (fixed) size of message that we send between the two programs
-#define MESSAGESIZE 40
+#define MAXMESSAGESIZE 1024
 
 
 // Prototypes
@@ -76,10 +76,14 @@ int main()
 	printf("Connected to server\n");
 
 	// We'll use this buffer to hold what we receive from the server.
-	char buffer[MESSAGESIZE];
+	char buffer[MAXMESSAGESIZE];
 
 	//messageSize = size of the message + 1
 	int ActualMessageSize = 0;
+
+	memset(buffer, '-', MAXMESSAGESIZE);
+	char* tbuffer = new char('x');
+	int MessageIndex = 0;
 
 	while (true)
 	{
@@ -93,8 +97,8 @@ int main()
 
 		// Copy the line into the buffer, filling the rest with dashes.
 		// (We must be careful not to write past the end of the array.)
-		memset(buffer, '-', MESSAGESIZE);
-		memcpy(buffer, line.c_str(), min(line.size(), MESSAGESIZE-1));
+		memset(buffer, '-', MAXMESSAGESIZE);
+		memcpy(buffer, line.c_str(), min(line.size(), MAXMESSAGESIZE -1));
 
 
 		//apply the delimiter to the end of the string
@@ -107,17 +111,51 @@ int main()
 		{
 			die("send failed");
 		}
+		else
+		{
+			memset(buffer, '-', MAXMESSAGESIZE);
+			MessageIndex = 0;
+		}
 
 		// Read a response back from the server.
-		int count = recv(sock, buffer, MESSAGESIZE, 0);
+		/*int count = recv(sock, buffer, MESSAGESIZE, 0);
 		if (count <= 0)
 		{
 			printf("Server closed connection\n");
 			break;
+		}*/
+
+		// Receive as much data from the client as will fit in the buffer.
+		bool GotCompleteMessage = false;
+		while (GotCompleteMessage == false)
+		{
+			int count = recv(sock, tbuffer, 1, 0);
+
+			if (count <= 0)
+			{
+				printf("Server closed connection\n");
+				return 0;
+			}
+			if (count != 1)
+			{
+				printf("Got strange-sized message from server\n");
+				return 0;
+			}
+
+			if (*tbuffer == '#')
+			{
+				GotCompleteMessage = true;
+			}
+			else
+			{
+				buffer[MessageIndex] = *tbuffer;
+				MessageIndex++;
+
+			}
 		}
 
-		printf("Received %d bytes from the server: '", count);
-		fwrite(buffer, 1, count, stdout);
+		printf("Received %d bytes from the server: '", MessageIndex);
+		fwrite(buffer, 1, MessageIndex, stdout);
 		printf("'\n");
 	}
 

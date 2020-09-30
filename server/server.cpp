@@ -22,7 +22,7 @@
 #define SERVERPORT 5555
 
 // The (fixed) size of message that we send between the two programs
-#define MESSAGESIZE 40
+#define MAXMESSAGESIZE 1024
 
 
 // Prototypes
@@ -115,11 +115,13 @@ int main()
 // The socket will be closed when this function returns.
 void talk_to_client(SOCKET clientSocket)
 {
-	char buffer[MESSAGESIZE];
-	memset(buffer, '-', MESSAGESIZE);
+	char buffer[MAXMESSAGESIZE];
+	memset(buffer, '-', MAXMESSAGESIZE);
 	char* tbuffer = new char('x');
 	int MessageIndex = 0;
 
+	//messageSize = size of the message + 1
+	int ActualMessageSize = 0;
 
 	while (true)
 	{
@@ -166,15 +168,19 @@ void talk_to_client(SOCKET clientSocket)
 		fwrite(buffer, 1, MessageIndex, stdout);
 		printf("'\n");
 
+		//apply the delimiter to the end of the string
+		buffer[MessageIndex] = '#';
+		ActualMessageSize = MessageIndex + 1;
+
 		// Send the same data back to the client.
-		if (send(clientSocket, buffer, MESSAGESIZE, 0) != MESSAGESIZE)
+		if (send(clientSocket, buffer, ActualMessageSize, 0) != ActualMessageSize)
 		{
 			printf("send failed\n");
 			return;
 		}
 		else
 		{
-			memset(buffer, '-', MESSAGESIZE);
+			memset(buffer, '-', MAXMESSAGESIZE);
 			MessageIndex = 0;
 		}
 	}
