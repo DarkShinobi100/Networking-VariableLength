@@ -78,6 +78,9 @@ int main()
 	// We'll use this buffer to hold what we receive from the server.
 	char buffer[MESSAGESIZE];
 
+	//messageSize = size of the message + 1
+	int ActualMessageSize = 0;
+
 	while (true)
 	{
 		printf("Type some text (\"quit\" to exit): ");
@@ -91,10 +94,16 @@ int main()
 		// Copy the line into the buffer, filling the rest with dashes.
 		// (We must be careful not to write past the end of the array.)
 		memset(buffer, '-', MESSAGESIZE);
-		memcpy(buffer, line.c_str(), min(line.size(), MESSAGESIZE));
+		memcpy(buffer, line.c_str(), min(line.size(), MESSAGESIZE-1));
+
+
+		//apply the delimiter to the end of the string
+		buffer[line.size()] = '#';
+		ActualMessageSize = line.size() + 1;
+
 
 		// Send the message to the server.
-		if (send(sock, buffer, MESSAGESIZE, 0) != MESSAGESIZE)
+		if (send(sock, buffer, ActualMessageSize, 0) != ActualMessageSize)
 		{
 			die("send failed");
 		}

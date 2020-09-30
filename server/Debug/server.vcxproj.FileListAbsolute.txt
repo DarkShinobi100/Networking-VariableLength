@@ -1,0 +1,2 @@
+C:\Users\User\Documents\C++\Networking\Networking-VariableLength\server\Debug\server.exe
+C:\Users\User\Documents\C++\Networking\Networking-VariableLength\server\Debug\server.pdb

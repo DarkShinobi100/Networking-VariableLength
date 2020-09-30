@@ -116,21 +116,42 @@ int main()
 void talk_to_client(SOCKET clientSocket)
 {
 	char buffer[MESSAGESIZE];
+	memset(buffer, '-', MESSAGESIZE);
+	char* tbuffer = new char('x');
+	int MessageIndex = 0;
+
 
 	while (true)
 	{
 		// Receive as much data from the client as will fit in the buffer.
-		int count = recv(clientSocket, buffer, MESSAGESIZE, MSG_WAITALL);
-		if (count <= 0)
+		bool GotCompleteMessage = false;
+		while (GotCompleteMessage == false)
 		{
-			printf("Client closed connection\n");
-			return;
-		}
-		if (count != MESSAGESIZE)
-		{
-			printf("Got strange-sized message from client\n");
-			return;
-		}
+			int count = recv(clientSocket, tbuffer, 1, 0);
+			
+			if (count <= 0)
+			{
+				printf("Client closed connection\n");
+				return;
+			}
+			if (count != 1)
+			{
+				printf("Got strange-sized message from client\n");
+				return;
+			}
+
+			if (*tbuffer == '#')
+			{
+				GotCompleteMessage = true;
+			}
+			else
+			{
+				buffer[MessageIndex] = *tbuffer;
+				MessageIndex++;
+
+			}
+		}		
+
 		if (memcmp(buffer, "quit", 4) == 0)
 		{
 			printf("Client asked to quit\n");
@@ -141,8 +162,8 @@ void talk_to_client(SOCKET clientSocket)
 		// received -- so we can't just use it as a C-style string directly
 		// without writing the \0 ourself.)
 
-		printf("Received %d bytes from the client: '", count);
-		fwrite(buffer, 1, count, stdout);
+		printf("Received %d bytes from the client: '", MessageIndex);
+		fwrite(buffer, 1, MessageIndex, stdout);
 		printf("'\n");
 
 		// Send the same data back to the client.
@@ -150,6 +171,11 @@ void talk_to_client(SOCKET clientSocket)
 		{
 			printf("send failed\n");
 			return;
+		}
+		else
+		{
+			memset(buffer, '-', MESSAGESIZE);
+			MessageIndex = 0;
 		}
 	}
 }
